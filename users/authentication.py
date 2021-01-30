@@ -8,7 +8,7 @@ from rest_framework.authentication import BaseAuthentication
 def generate_access_token(user):
     payload ={
         'user_id':user.id,
-        'exp':datetime.datetime.utcnow() + datetime.timedelta(seconds=30),
+        'exp':datetime.datetime.utcnow() + datetime.timedelta(minutes=100),
         'iat':datetime.datetime.utcnow()
     }
     return jwt.encode(payload,settings.SECRET_KEY,algorithm="HS256")
@@ -22,7 +22,7 @@ class JwtAuthentication(BaseAuthentication):
         try:
             payload = jwt.decode(token,settings.SECRET_KEY,algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
-            raise exceptions.AuthenticationFailed("Daemon User")
+            raise exceptions.AuthenticationFailed("Unauthenticated user")
         try:
             user = get_user_model().objects.get(id=payload['user_id'])
         except AuthenticationFailed:

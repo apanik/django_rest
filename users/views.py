@@ -1,7 +1,7 @@
-from .models import User
+from .models import User,Permissons,Role
 from django.shortcuts import render
-from rest_framework import exceptions
-from .serializers import UserSerializer
+from rest_framework import exceptions, viewsets
+from .serializers import UserSerializer,PermissonSerializer,RolesSerializer
 from rest_framework.response import Response
 from .authentication import JwtAuthentication
 from .authentication import generate_access_token
@@ -60,4 +60,54 @@ class AuthenticatedUser(APIView):
 
     def get(slef,request):
         serializer = UserSerializer(request.user)
-        return Response({"data":serializer.data})
+        return Response(
+            {
+                "data":serializer.data
+                }
+            )
+
+
+class Permisson(APIView):
+    authentication_classes = [JwtAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(slef,request):
+        serializer = PermissonSerializer(Permissons.objects.all(),many=True)
+        return Response(
+            {
+                "data":serializer.data
+                }
+            )
+
+class RolesSet(viewsets.ViewSet):
+    authentication_classes = [JwtAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def list(self,request):
+        serializer = RolesSerializer(Role.objects.all(),many=True)
+        return Response(
+            {
+            'data':serializer.data
+            }
+            )
+                        
+        
+        
+    def retrive(self,request,pk=None):
+        pass
+    def create(self,request):
+        serializer = RolesSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {
+                "data":serializer.data
+            }
+        )
+        
+    def update(self,request,pk=None):
+        pass
+    def destroy(self,request,pk=None):
+        pass
+    
+    
