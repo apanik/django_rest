@@ -1,12 +1,13 @@
 from .models import User,Permissons,Role
 from django.shortcuts import render
-from rest_framework import exceptions, viewsets
+from rest_framework import exceptions, viewsets,generics,mixins
 from .serializers import UserSerializer,PermissonSerializer,RolesSerializer
 from rest_framework.response import Response
 from .authentication import JwtAuthentication
 from .authentication import generate_access_token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view,APIView
+from src.pagination import CustomPaginator
 
 
 # Create your views here.
@@ -85,29 +86,53 @@ class RolesSet(viewsets.ViewSet):
     
     def list(self,request):
         serializer = RolesSerializer(Role.objects.all(),many=True)
-        return Response(
-            {
+        return Response({
             'data':serializer.data
-            }
-            )
-                        
-        
+            })       
         
     def retrive(self,request,pk=None):
-        pass
+        role = Role.objects.get(id=pk)
+        serializer = RolesSerializer(role)
+        return Response({
+            'data':serializer.data
+        })
+        
     def create(self,request):
         serializer = RolesSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(
-            {
+        return Response({
                 "data":serializer.data
-            }
-        )
+            })
         
     def update(self,request,pk=None):
-        pass
+        role = Role.objects.get(id=pk)
+        serializer = RolesSerializer(instance=role,data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({
+            "data":serializer.data
+        })
     def destroy(self,request,pk=None):
-        pass
+        role = Role.objects.get(id=pk)
+        role.save()
+        return Response({
+            'status':'no content'
+        })
     
     
+    
+class UserGenericView(generics.GenericAPIView,mixins.ListModelMixin,mixins.RetrieveModelMixin):
+        authentication_classes = [JwtAuthentication]
+        permission_classes = [IsAuthenticated]
+        queryset = User.objects.all()
+        serializer_class = UserSerializer
+        pagination_class = CustomPaginator
+        
+        def get(self,request,pk=None):
+            if pk:
+                return Response({
+                    'data': self.retrieve(request,pk).data})
+                                
+            return(self.list(request))
+                            
